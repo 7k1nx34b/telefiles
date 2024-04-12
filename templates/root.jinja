@@ -1,0 +1,108 @@
+<html lang="en_US">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta name="robots" content="index, follow">
+    <title>Anonymous File Upload - TeleFiles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/root.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="site-wrapper" class="container">
+
+        <div id="header" class="row">
+            <div class="col-xs-0 col-md-3"></div>
+            <div class="col-xs-12 col-md-6">
+                <a href="/">
+                    <img id="header-logo" class="img-responsive center-block"
+                        src="{{ url_for('static', filename='img/logo.svg') }}">
+                </a>
+            </div>
+            <div class="col-xs-0 col-md-3"></div>
+        </div>
+        <div id="upload-top" class="row top-wrapper">
+            <div class="col-xs-0 col-md-3"></div>
+            <div class="col-xs-12 col-md-6 text-center">
+                <h1 data-uploading-text="Uploading">Anonymous File Upload</h1>
+            </div>
+            <div class="col-xs-0 col-md-3"></div>
+        </div>
+
+        <div id="upload-wrapper" class="row">
+            <div class="col-xs-0 col-md-3"></div>
+            <div id="dropzone-area" class="col-xs-12 col-md-6 text-center dz-clickable">
+                <div style="margin-bottom: 3%;">
+                    <a href="" id="upload-file-url" style="text-decoration: none;"></a>
+                </div>
+                <input type="file" id="upload-file" style="display: none">
+                <progress id="file-progress" max="100" value="0" style="display: none; width: 100%;"></progress>
+                <button id="btn-file-upload" class="btn btn-primary btn-block dz-message">UPLOAD</button>
+                <script>
+                    const uploadFileEl = document.getElementById('upload-file');
+                    const uploadFileUrlEl = document.getElementById('upload-file-url');
+                    const btnFileUploadEl = document.getElementById('btn-file-upload');
+                    const fileProgressEl = document.getElementById('file-progress');
+
+                    const request = axios.create({
+                        onUploadProgress: ({total, loaded}) => {
+                            fileProgressEl.style.display = 'block';
+                            fileProgressEl.max = total;
+                            fileProgressEl.value = loaded;
+                        },
+                    });
+
+                    uploadFileEl.addEventListener('change', async e => {
+                        // 업로드 중 인터랙션 방지 . . .
+                        window.onbeforeunload = () => '';
+                        btnFileUploadEl.disabled = true;
+
+                        const formData = new FormData();
+                        formData.append('file', e.target.files[0]);
+                        await request.post('/upload', formData)
+                            .then(({data: {encrypted}}) => {
+                                uploadFileEl.value = '';
+                                uploadFileUrlEl.href = `/download/${encodeURIComponent(encrypted)}`;
+                                uploadFileUrlEl.innerText = '📁';
+                            })
+                            .catch(e => {
+                                console.error(e);
+                                alert('Error! check console');
+                            });
+
+                        // 업로드 중 인터랙션 방지 해제 . . .
+                        fileProgressEl.style.display = 'none';
+                        btnFileUploadEl.disabled = false;
+                        window.onbeforeunload = null;
+                    });
+
+                    btnFileUploadEl.addEventListener('click', () => uploadFileEl.click());
+                </script>
+            </div>
+            <div class="col-xs-0 col-md-3"></div>
+        </div>
+
+
+        <div id="upload-preview-wrapper" class="row">
+            <div class="col-xs-0 col-md-3"></div>
+            <div id="upload-preview" class="col-xs-12 col-md-6">
+            </div>
+            <div class="col-xs-0 col-md-3"></div>
+        </div>
+
+
+        <div id="upload-description" class="row">
+            <div class="col-xs-0 col-md-2"></div>
+            <div class="col-xs-12 col-md-8 text-center">
+                <p>Upload your files anonymously and free on TeleFile</p>
+                <p>We offer you 4 GB filesize limit and unlimited bandwidth.</p>
+            </div>
+            <div class="col-xs-0 col-md-2"></div>
+        </div>
+    </div>
+
+</body>
+
+</html>
